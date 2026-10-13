@@ -1,0 +1,9 @@
+# 交付目录
+
+美工维护deliveries/<任务号>/<交付版本>/；本说明与TEMPLATE由协调员维护。旧交付版本不可覆盖，返工用新版本，新目录记录supersedes。推荐index.html、styles/、scripts/、assets/、README.md、MANIFEST.md。
+
+README说明准确运行方式、页面和交互范围、依赖、模拟数据及未实现项；不把效果图/文本描述视为可运行原型。必要时提供可公开预览，但源码必须留仓库。
+
+MANIFEST写任务号、任务版本、读取任务完整Commit SHA、交付版本、执行状态submitted、文件清单/SHA256、运行方式、视口/交互/浏览器测试、素材许可及限制。不能伪造未执行的浏览器测试。交付最终Commit由协调员在feedback填写，禁止自引用同一提交。
+
+二进制受限时提交assets-encoded/<名称>.base64及清单（目标相对路径、MIME、字节数、SHA256），协调员在隔离环境解码校验；禁止绝对路径、../、符号链接或压缩炸弹，ZIP解包前查路径/体积。不上传凭据；编码不改变公开性。还原结果由协调员在feedback公布证据/Commit，不直接覆盖美工原文件。
