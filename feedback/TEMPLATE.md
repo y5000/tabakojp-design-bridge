@@ -12,3 +12,5 @@
 
 功能建议：引用交付FEATURE_REQUESTS.md及独立功能编号；写明模拟/真实、所需数据、用户行为与效果。
 能力核查/路由/依赖：协调员记录existing/reuse/adjust/new/unknown及证据，frontend/backend任务和reviewed/accepted门槛；业务扩大需用户批准。
+
+网站验证：使用SITE_REVIEW_REQUEST_TEMPLATE；实际部署版本与源码提交区分，亲测/推测/受阻/未测分别记录，美工复核不替代用户验收。
