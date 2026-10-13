@@ -9,3 +9,6 @@
 后端接口需求：<待协调员安排>
 用户最终验收：pending / accepted / rejected（仅依据真实用户确认）
 下一步及状态：<说明>
+
+功能建议：引用交付FEATURE_REQUESTS.md及独立功能编号；写明模拟/真实、所需数据、用户行为与效果。
+能力核查/路由/依赖：协调员记录existing/reuse/adjust/new/unknown及证据，frontend/backend任务和reviewed/accepted门槛；业务扩大需用户批准。

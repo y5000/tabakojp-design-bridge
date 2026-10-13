@@ -14,3 +14,6 @@
 素材来源及许可：<说明>
 已知限制、回退与问题：<说明>
 最终交付Commit由协调员在feedback记录，不在本次提交内伪造自身SHA。
+
+功能建议：引用交付FEATURE_REQUESTS.md及独立功能编号；写明模拟/真实、所需数据、用户行为与效果。
+能力核查/路由/依赖：协调员记录existing/reuse/adjust/new/unknown及证据，frontend/backend任务和reviewed/accepted门槛；业务扩大需用户批准。
