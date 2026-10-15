@@ -19,7 +19,9 @@ The project owner authorized one independent workflow, `.github/workflows/mobile
 
 Generic checks: exact CSS viewport, horizontal overflow, asset loading, preserved image proportions or cover/contain rendering, square nav icon boxes. Longyin adapter: product/price boundaries, text clipping, search response, coupon state, favourites, simulated cart count, drawer open/close and viewport bounds, category navigation, fixed-bottom nav position and purchase-row visibility at the bottom of scrolling. A 44×44 CSS-pixel mobile tap area is a diagnostic threshold; a failure records a design issue, not an authorization to change an approved baseline.
 
-Syntax checks pass locally. Actual CI runtime status at this setup checkpoint: **not_tested / awaiting first workflow execution**. The inert `.example` file is the source template for the authorized workflow. Actual execution reports are Actions artifacts; merely committing the files does not mark browser checks passed.
+First actual GitHub-hosted Chromium execution completed on 2026-10-16 01:58 Asia/Shanghai: https://github.com/y5000/tabakojp-design-bridge/actions/runs/38781685736 . Source commit: `2fe05ec03c6a8c2d8414b3db19b5b7f5e8057ec8`. Chromium 151.0.7922.34 actually rendered all four sizes. Desktop passed 21/21 checks. Each simulated mobile size passed 20/22 checks; price text exceeded its container and coupon/favourite hit areas were below the diagnostic 44×44 threshold. The Actions run correctly reported failure for these design findings while browser installation, HTTP server, interaction execution, screenshots and artifact upload all succeeded. The prototype HTML was not changed by this setup task.
+
+The runner now waits for transient toasts/touch highlighting to settle before bottom/drawer evidence capture; this affects capture timing only. The inert `.example` file is the source template for the authorized workflow. Actual execution reports are Actions artifacts, not inferred from source review.
 
 ## Remaining limits
 

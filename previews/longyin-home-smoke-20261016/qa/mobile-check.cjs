@@ -86,6 +86,7 @@ async function main(){
           check('Cart drawer opens',(await page.locator('#cartDrawer').getAttribute('class')).includes('open'));
           const panel=await page.locator('.cart-panel').boundingBox();
           check('Drawer fits viewport',!!panel&&panel.x>=-1&&panel.y>=-1&&panel.x+panel.width<=size.width+1&&panel.y+panel.height<=size.height+1,panel);
+          await page.waitForTimeout(350);
           await page.screenshot({path:path.join(out,name+'-drawer.png')});
           result.screenshots.push(name+'-drawer.png');
           await activate(page.locator('[data-close]'));
@@ -93,6 +94,8 @@ async function main(){
           await activate(page.locator('[data-nav="brands"]'));
           check('Category navigation changes active state',(await page.locator('[data-nav="brands"]').getAttribute('class')).includes('active'));
           await page.evaluate(()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'instant'}));
+          await page.waitForFunction(()=>!document.querySelector('#toast')?.classList.contains('show'),null,{timeout:5000});
+          await page.waitForTimeout(350);
           const bottom=await page.evaluate(()=>{const n=document.querySelector('.bottom-nav'),p=document.querySelector('.purchase-row'),r=n.getBoundingClientRect(),b=p.getBoundingClientRect();return {position:getComputedStyle(n).position,navBottom:r.bottom,navTop:r.top,purchaseBottom:b.bottom,scrollY};});
           check('Navigation stays fixed at viewport bottom',bottom.position==='fixed'&&Math.abs(bottom.navBottom-size.height)<=1,bottom);
           check('Scrolling reveals complete purchase row',bottom.purchaseBottom<=bottom.navTop+1,bottom);
@@ -103,11 +106,12 @@ async function main(){
           result.not_tested=['Physical iPhone / Safari rendering','Safe-area inset on a physical device','Pixel comparison with approved design master','Real backend, payment, account and order functions'];
         } catch(e){result.status=result.checks.length?'rework':'not_tested';result.error=e.message;result.screenshots.push(name+'-failure.png');await page.screenshot({path:path.join(out,name+'-failure.png')}).catch(()=>{});}
         reports.push(result);
+        console.log(JSON.stringify({viewport:result.viewport,status:result.status,failed:result.checks.filter(c=>c.status!=='pass').map(c=>c.name),error:result.error||null}));
         await context.close();
       }
     }
   } finally {await browser.close();}
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({runnerStatus:'executed',physicalDeviceTested:false,reports},null,2));
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({runnerStatus:'executed',browserInfrastructure:'pass',physicalDeviceTested:false,reports},null,2));
   const summary=['# Prototype browser test results','','Commit: `'+sha+'`','','Mobile dimensions below are simulated Chromium viewports, not physical iPhones.','','| Preview | Viewport | Result | Failed checks |','| --- | --- | --- | --- |',...reports.map(r=>'| '+new URL(r.url).pathname+' | '+r.viewport.width+'×'+r.viewport.height+' | '+r.status+' | '+r.checks.filter(c=>c.status!=='pass').map(c=>c.name).join('; ')+' |'),'','See results.json, browser screenshots and HTTP logs in the Actions artifact.',''];
   await fs.writeFile(path.join(out,'summary.md'),summary.join('\n'));
   if(process.env.GITHUB_STEP_SUMMARY)await fs.appendFile(process.env.GITHUB_STEP_SUMMARY,summary.join('\n'));
