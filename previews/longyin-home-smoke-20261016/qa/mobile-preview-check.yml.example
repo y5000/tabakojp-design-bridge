@@ -1,0 +1,71 @@
+# Inert draft. Enabling requires a separate file in .github/workflows/.
+name: Mobile design preview checks
+on:
+  workflow_run:
+    workflows: [Publish design previews]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Repository preview directory
+        default: previews/longyin-home-smoke-20261016
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: mobile-design-qa
+  cancel-in-progress: false
+jobs:
+  mobile:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Select changed design directories
+        id: targets
+        env:
+          MANUAL_TARGET: ${{ inputs.target }}
+        run: |
+          python3 - <<'PY'
+          import os, json, subprocess
+          from pathlib import Path
+          targets=set()
+          if os.environ.get('MANUAL_TARGET'):
+              targets.add(os.environ['MANUAL_TARGET'].rstrip('/'))
+          else:
+              changed=subprocess.check_output(['git','diff-tree','--no-commit-id','--name-only','-r','HEAD'],text=True).splitlines()
+              for filename in changed:
+                  p=Path(filename)
+                  if p.parts[0] not in ('previews','deliveries'): continue
+                  for parent in p.parents:
+                      if (parent/'index.html').is_file():
+                          targets.add(parent.as_posix()); break
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:
+              f.write('targets='+json.dumps([{'path':p} for p in sorted(targets)])+'\n')
+          PY
+      - name: Install browser test dependencies
+        if: steps.targets.outputs.targets != '[]'
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Test deployed HTTPS pages at three mobile sizes
+        if: steps.targets.outputs.targets != '[]'
+        env:
+          QA_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
+          QA_TARGETS: ${{ steps.targets.outputs.targets }}
+        run: node previews/longyin-home-smoke-20261016/qa/mobile-check.cjs
+      - name: Upload actual screenshots and test results
+        if: always() && steps.targets.outputs.targets != '[]'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-design-qa-${{ github.run_id }}
+          path: mobile-qa-results/
+          retention-days: 14
+          if-no-files-found: warn
