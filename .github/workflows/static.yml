@@ -94,6 +94,70 @@ jobs:
           print("Published preview versions:", len(entries))
           PY
 
+      - name: Add independent design previews
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          import html
+
+          source = Path("previews")
+          destination = Path("_pages/previews")
+          allowed = {
+              ".html", ".css", ".js",
+              ".png", ".jpg", ".jpeg",
+              ".gif", ".webp", ".svg",
+              ".ico", ".woff", ".woff2"
+          }
+
+          entries = []
+
+          if source.is_dir():
+              for index in sorted(source.rglob("index.html")):
+                  folder = index.parent
+                  relative = folder.relative_to(source)
+
+                  if any(p.is_symlink() for p in folder.parents):
+                      continue
+                  if folder.is_symlink():
+                      continue
+
+                  target = destination / relative
+
+                  for item in folder.rglob("*"):
+                      if not item.is_file() or item.is_symlink():
+                          continue
+                      if item.suffix.lower() not in allowed:
+                          continue
+                      if any(p.is_symlink() for p in item.parents):
+                          continue
+
+                      output = target / item.relative_to(folder)
+                      output.parent.mkdir(parents=True, exist_ok=True)
+                      shutil.copy2(item, output)
+
+                  url = "previews/" + relative.as_posix() + "/"
+                  entries.append(
+                      '<li><a href="' +
+                      html.escape(url, quote=True) + '">' +
+                      html.escape("草稿 / " + relative.as_posix()) +
+                      '</a></li>'
+                  )
+
+          home = Path("_pages/index.html")
+          if home.exists() and entries:
+              content = home.read_text(encoding="utf-8")
+              content = content.replace(
+                  "</ul>",
+                  "\n".join(entries) + "</ul>",
+                  1
+              )
+              home.write_text(content, encoding="utf-8")
+
+          print("Draft previews published:", len(entries))
+          PY
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
