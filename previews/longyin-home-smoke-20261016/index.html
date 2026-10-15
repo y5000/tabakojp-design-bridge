@@ -11,6 +11,24 @@
 @media(min-width:900px){.topbar{padding:18px 34px}.notice{padding-left:38px}.hero img{aspect-ratio:852/340}.section-head{margin-top:30px}.brands{gap:14px}.brand{min-height:142px}.services{padding-top:30px}.product{grid-template-columns: minmax(300px,.84fr) minmax(0,1.3fr);gap:24px}.product-name{font-size:30px}.bottom-nav{min-height:92px}.store{padding-bottom:116px}}
 @media(max-width:600px){body{background:#fff}.store{max-width:852px;padding-bottom:calc(92px + env(safe-area-inset-bottom))}.topbar{grid-template-columns:150px minmax(0,1fr) 42px;gap:10px;padding:8px 14px 10px}.logo{width:148px;height:72px}.search{height:46px;padding:0 13px;gap:8px}.search input{font-size:14px}.search svg{width:20px}.cart-top{padding:4px}.cart-top svg{width:31px;height:31px}.badge{min-width:20px;height:20px;font-size:11px}.notice{min-height:48px;padding:10px 18px;gap:11px;font-size:13px}.notice svg{width:21px;height:21px}.hero img{aspect-ratio:852/340}.hero-cta{font-size:clamp(9px,2.6vw,12px);padding:0;bottom:4%}.announcement{margin:12px 12px 0;min-height:52px;padding:0 14px;gap:10px;font-size:14px}.announcement svg{width:26px;height:26px}.coupons{padding:11px 12px 0;gap:6px}.coupon{min-height:107px;padding-top:4px;border-radius:9px 9px 6px 6px}.coupon::before,.coupon::after{width:15px;height:15px;top:67%}.coupon::before{left:-8px}.coupon::after{right:-8px}.coupon-amount{height:58px;font-size:clamp(30px,7.2vw,40px)}.coupon-rule{font-size:clamp(10px,2.9vw,13px)}.coupon-action{height:33px;margin-top:6px;font-size:clamp(10px,2.7vw,13px)}.coupon-action svg{width:12px;height:12px}.section-head{margin:19px 14px 10px}.section-head h2{font-size:22px}.more{font-size:14px}.brands{padding:0 12px;gap:7px}.brand{min-height:86px;padding:7px 2px}.brand b{font-size:clamp(13px,3.7vw,19px)}.brand .stars{font-size:8px}.brand span,.brand .latin{font-size:10px}.services{gap:5px;padding:17px 14px 0}.service{gap:6px}.service-icon{width:42px;height:42px}.service-icon svg{width:27px;height:27px}.service strong{font-size:12px;margin-bottom:3px}.service small{font-size:8px;letter-spacing:-.03em}.recommend{padding:0 12px}.rec-title{gap:8px;margin:22px 0 12px}.rec-title::before{height:31px;width:5px}.rec-title h2{font-size:22px}.rec-title span{font-size:11px}.product{grid-template-columns:minmax(0,.88fr) minmax(0,1.35fr);gap:10px;padding-bottom:12px}.product-photo{min-height:0;aspect-ratio:1/1;align-self:start;object-fit:cover}.product-top{gap:4px;min-height:26px}.tag{font-size:10px;padding:4px 5px}.heart svg{width:22px;height:22px}.product-name{font-size:clamp(16px,4.6vw,21px);margin:5px 0 3px}.product-jp{font-size:12px;margin-bottom:6px}.product-detail{font-size:12px;min-height:24px}.sold{font-size:11px}.promo{gap:6px;margin-top:9px;font-size:11px}.promo b{padding:6px 7px;font-size:10px}.purchase-row{grid-template-columns:minmax(0,1fr) 74px;gap:5px;padding-top:10px}.prices{gap:4px}.price{font-size:clamp(22px,6.7vw,29px)}.per{font-size:13px}.reference{font-size:10px}.add-cart{height:70px;border-radius:6px;font-size:10px;gap:3px}.add-cart svg{width:28px;height:28px}.bottom-nav{min-height:78px;padding:8px 10px calc(9px + env(safe-area-inset-bottom))}.nav-item{min-height:58px;gap:3px;font-size:12px}.nav-item svg{width:27px;height:27px}.nav-badge{top:0;height:17px;min-width:17px;font-size:10px}.toast{bottom:calc(94px + env(safe-area-inset-bottom));font-size:13px}.cart-panel{padding-left:18px;padding-right:18px}}
 @media(max-width:360px){.topbar{grid-template-columns:124px minmax(0,1fr) 34px;padding-left:10px;padding-right:10px}.logo{width:124px}.search{height:42px}.search input{font-size:12px}.product{gap:7px}.purchase-row{grid-template-columns:minmax(0,1fr) 66px}.reference{font-size:9px}.price{font-size:21px}.per{font-size:12px}.add-cart{height:65px}}
+
+/* Draft refinement: retain PC styling; reserve real mobile hit areas and price space. */
+.cart-label-tail{display:inline}
+@media(max-width:600px){
+  /* The transparent top border enlarges the real button without moving its visible band. */
+  .coupon-action{height:44px;min-height:44px;flex-shrink:0;margin-top:-5px;border-top:11px solid transparent;background-clip:padding-box}
+  /* Position the larger target independently of the tag row's visual height. */
+  .product-top{position:relative;padding-right:37px}
+  .heart{position:absolute;right:-7px;top:50%;transform:translateY(-50%);margin:0;width:44px;height:44px;min-width:44px;min-height:44px}
+  .prices{flex-wrap:wrap;row-gap:3px}
+  .prices>*{flex:none}
+}
+@media(max-width:450px){
+  .purchase-row{grid-template-columns:minmax(0,1fr) 44px}
+  .add-cart{min-width:44px;white-space:normal;line-height:1.2}
+  .cart-label-tail{display:block}
+}
+
 </style>
 <meta name="robots" content="noindex"><style>.draft-ribbon{position:fixed;z-index:100;right:8px;top:8px;padding:5px 9px;border-radius:14px;background:#fff7db;color:#684e12;font:12px/1.2 sans-serif;box-shadow:0 2px 8px #0002;pointer-events:none}</style></head>
 <body><div class="draft-ribbon">獨立草稿預覽・演示資料</div>
@@ -57,7 +75,7 @@
       <h3 class="product-name">MEVIUS Original</h3><p class="product-jp">メビウス・オリジナル</p>
       <div class="product-detail"><span>滑順口感・經典原味</span><span class="sold">♨ 已售 1.2萬+</span></div>
       <div class="promo"><b>限時優惠</b><span>滿 10 條立減 ¥500</span></div>
-      <div class="purchase-row"><div class="prices"><strong class="price">¥4,250</strong><span class="per">/ 條</span><span class="reference">參考價 ¥4,800</span></div><button class="add-cart" type="button"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h5l4.5 22h20L37 12H10"/><circle cx="16" cy="34" r="2.5"/><circle cx="30" cy="34" r="2.5"/></svg><span>加入購物車</span></button></div>
+      <div class="purchase-row"><div class="prices"><strong class="price">¥4,250</strong><span class="per">/ 條</span><span class="reference">參考價 ¥4,800</span></div><button class="add-cart" type="button"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h5l4.5 22h20L37 12H10"/><circle cx="16" cy="34" r="2.5"/><circle cx="30" cy="34" r="2.5"/></svg><span>加入<span class="cart-label-tail">購物車</span></span></button></div>
     </div>
   </article>
 </section>
