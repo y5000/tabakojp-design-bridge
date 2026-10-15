@@ -1,32 +1,30 @@
-# Mobile QA environment draft — not enabled
+# PC and simulated-mobile preview QA
 
-## Current verification
+## Scope and authorization
 
-2026-10-16 Asia/Shanghai, performed by Work:
+The project owner authorized one independent workflow, `.github/workflows/mobile-design-preview.yml`, on 2026-10-16 Asia/Shanghai, solely for prototype PC/mobile testing and necessary setup debugging. It reads `previews/` and writes ephemeral CI results. It has `contents: read`, no deploy/management/business permissions, and does not change `static.yml`, formal deliveries, task state or OpenCart data. This authorization does not extend to any other workflow.
 
-- Cloud Browser capability inventory: empty; exposed APIs have no device or viewport setter.
-- Local Playwright 1.62.1 is installed. Its bundled browser executable is absent.
-- Playwright browser download returned a non-ZIP response; that route was stopped.
-- Google official Chrome Debian package downloaded and extracted successfully. Chrome reported version 155.0.8059.79.
-- Actual Playwright launch failed before opening a page: `FATAL:chrome/browser/process_singleton_posix.cc:297 socket() failed: Operation not permitted (1)`.
-- This is a Work execution sandbox restriction. No bypass or security changes were attempted.
-- All mobile page rendering, interactions and screenshots remain **not_tested**. Downloading a browser and syntax-checking scripts do not count as a successful browser test.
+## Implementation
 
-## Proposed one-time setup
+- Reuses the previously submitted `mobile-check.cjs` runner.
+- Runs on GitHub-hosted Ubuntu with Node 22, Playwright 1.62.1 and Playwright-installed Chromium.
+- Checks out exactly `github.sha`, records it in the artifact, and starts Python HTTP server bound to `127.0.0.1:4173` on that runner.
+- Compares served HTML SHA256 with the checked-out `index.html`; no dependency on GitHub Pages cache/deployment.
+- Only paths under `previews/` are test targets. Changed draft directories are selected on push; manual dispatch can select a draft. Workflow-only/setup commits default to the existing Longyin draft.
+- Uses desktop 1440×1000, plus simulated mobile 375×667, 390×844 and 412×915 CSS pixels. Mobile enables touch and mobile viewport mode at scale factor 1.
+- External browser requests are blocked. Only the isolated runner HTTP origin is allowed; real storefront/API actions cannot be triggered by the tests.
+- Stores result JSON, Markdown summary, top/full-page/cart-drawer/bottom screenshots, commit identity, target list, installation/browser/server logs as 14-day Actions artifacts, including failed runs. No result commits or deploy loop.
 
-Use an independent GitHub-hosted Actions job after successful `Publish design previews`. Run Playwright Chromium with real mobile viewport contexts at 375×667, 390×844 and 412×915 CSS pixels, device scale factor 1, mobile and touch enabled. It opens the deployed GitHub Pages HTTPS page, never localhost or the OpenCart storefront.
+## Checks
 
-The workflow template is inert at this path. To activate, add it as a new `.github/workflows/mobile-design-preview.yml` file, with separate authorization for that workflow path. Existing deployment workflow and task/status files do not need changes.
+Generic checks: exact CSS viewport, horizontal overflow, asset loading, preserved image proportions or cover/contain rendering, square nav icon boxes. Longyin adapter: product/price boundaries, text clipping, search response, coupon state, favourites, simulated cart count, drawer open/close and viewport bounds, category navigation, fixed-bottom nav position and purchase-row visibility at the bottom of scrolling. A 44×44 CSS-pixel mobile tap area is a diagnostic threshold; a failure records a design issue, not an authorization to change an approved baseline.
 
-`mobile-check.cjs` checks exact viewport, deployed/source HTML hash, horizontal overflow, loaded images, tap target dimensions, product column/price collisions, search, coupon, favourites, demo cart, drawer bounds/close, scroll and fixed-bottom navigation. It stores actual screenshots and JSON as a 14-day Actions artifact. The workflow does not commit results or modify pages, so it cannot create a commit/deploy loop. Changed design directories are selected automatically; manual first-run testing is also supported.
+Syntax checks pass locally. Actual CI runtime status at this setup checkpoint: **not_tested / awaiting first workflow execution**. The inert `.example` file is the source template for the authorized workflow. Actual execution reports are Actions artifacts; merely committing the files does not mark browser checks passed.
 
-## Honest status and limits
+## Remaining limits
 
-- Runner implementation: draft, syntax checked only; runtime **not_tested**.
-- Workflow: template only, **not enabled / not_tested**.
-- First successful CI run must be inspected before treating the environment as usable.
-- Browser screenshots support visual review; automated checks do not prove pixel-level visual fidelity.
-- Physical iPhone Safari, real device safe area, backend, payments, inventory and account operations are outside these checks.
-- A failed test reports `rework`; deployment mismatch/launch failure is `not_tested`. A test failure never authorizes marketplace development or changes formal task status.
+These are simulated Chromium mobile contexts, not physical iPhones or Safari. Physical device safe area, pixel comparison against the AI design master, and real backend/account/payment/order/inventory behavior remain not_tested. Screenshots support visual inspection; DOM/geometry checks alone do not prove pixel fidelity.
 
-No secrets, private endpoints, login data or customer data are used.
+## Work environment finding (historical)
+
+Cloud Browser exposed no viewport/device setter. Local Playwright existed but its bundled browser was absent. Its browser download returned an invalid archive. Official Google Chrome downloaded successfully, but actual startup was blocked by the Work sandbox with `socket() failed: Operation not permitted (1)`. No more local browser launch attempts are needed. These findings do not imply that any mobile viewport was tested.

@@ -1,71 +1,112 @@
-# Inert draft. Enabling requires a separate file in .github/workflows/.
-name: Mobile design preview checks
+name: PC and mobile design preview checks
+
 on:
-  workflow_run:
-    workflows: [Publish design previews]
-    types: [completed]
+  push:
     branches: [main]
+    paths:
+      - 'previews/**'
+      - '.github/workflows/mobile-design-preview.yml'
   workflow_dispatch:
     inputs:
       target:
-        description: Repository preview directory
+        description: Independent draft directory under previews/
         default: previews/longyin-home-smoke-20261016
         required: true
+
 permissions:
   contents: read
+
 concurrency:
-  group: mobile-design-qa
+  group: mobile-design-qa-${{ github.ref }}
   cancel-in-progress: false
+
 jobs:
-  mobile:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+  browser-checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-          fetch-depth: 2
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Select changed design directories
+      - name: Select independent draft directories from this commit
         id: targets
         env:
           MANUAL_TARGET: ${{ inputs.target }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
         run: |
+          mkdir -p mobile-qa-results
+          git rev-parse HEAD | tee mobile-qa-results/commit.txt
           python3 - <<'PY'
-          import os, json, subprocess
+          import os, json, re, subprocess
           from pathlib import Path
           targets=set()
-          if os.environ.get('MANUAL_TARGET'):
-              targets.add(os.environ['MANUAL_TARGET'].rstrip('/'))
+          manual=os.environ.get('MANUAL_TARGET','').rstrip('/')
+          if manual:
+              targets.add(manual)
           else:
-              changed=subprocess.check_output(['git','diff-tree','--no-commit-id','--name-only','-r','HEAD'],text=True).splitlines()
-              for filename in changed:
+              before=os.environ.get('BEFORE_SHA','')
+              if before and set(before)!={'0'}:
+                  cmd=['git','diff','--name-only',before,os.environ['HEAD_SHA']]
+              else:
+                  cmd=['git','diff-tree','--no-commit-id','--name-only','-r','HEAD']
+              for filename in subprocess.check_output(cmd,text=True).splitlines():
                   p=Path(filename)
-                  if p.parts[0] not in ('previews','deliveries'): continue
+                  if p.parts[0]!='previews': continue
                   for parent in p.parents:
                       if (parent/'index.html').is_file():
                           targets.add(parent.as_posix()); break
+              if not targets:
+                  targets.add('previews/longyin-home-smoke-20261016')
+          for target in targets:
+              p=Path(target)
+              if not re.fullmatch(r'previews/[A-Za-z0-9_./-]+',target) or '..' in target:
+                  raise ValueError('Only independent previews are allowed')
+              if not (p/'index.html').is_file() or p.is_symlink() or any(parent.is_symlink() for parent in p.parents):
+                  raise ValueError('Missing or unsafe preview directory: '+target)
+          data=json.dumps([{'path':p} for p in sorted(targets)])
+          Path('mobile-qa-results/targets.json').write_text(data)
           with open(os.environ['GITHUB_OUTPUT'],'a') as f:
-              f.write('targets='+json.dumps([{'path':p} for p in sorted(targets)])+'\n')
+              f.write('targets='+data+'\n')
           PY
-      - name: Install browser test dependencies
-        if: steps.targets.outputs.targets != '[]'
+      - name: Install Playwright and Chromium on GitHub runner
         run: |
-          npm install --no-save --ignore-scripts playwright@1.62.1
-          npx playwright install --with-deps chromium
-      - name: Test deployed HTTPS pages at three mobile sizes
-        if: steps.targets.outputs.targets != '[]'
+          set -o pipefail
+          npm install --no-save --ignore-scripts playwright@1.62.1 2>&1 | tee mobile-qa-results/install.log
+          npx playwright install --with-deps chromium 2>&1 | tee -a mobile-qa-results/install.log
+      - name: Start isolated HTTP server for checked-out source
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > mobile-qa-results/http-server.log 2>&1 &
+          echo $! > mobile-qa-results/http-server.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Run PC and simulated mobile viewport checks
         env:
-          QA_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
+          QA_COMMIT: ${{ github.sha }}
           QA_TARGETS: ${{ steps.targets.outputs.targets }}
-        run: node previews/longyin-home-smoke-20261016/qa/mobile-check.cjs
-      - name: Upload actual screenshots and test results
-        if: always() && steps.targets.outputs.targets != '[]'
+          QA_BASE_URL: http://127.0.0.1:4173/
+        run: |
+          set -o pipefail
+          node previews/longyin-home-smoke-20261016/qa/mobile-check.cjs 2>&1 | tee mobile-qa-results/browser-run.log
+      - name: Stop isolated preview service
+        if: always()
+        run: |
+          if [ -f mobile-qa-results/http-server.pid ]; then
+            kill "$(cat mobile-qa-results/http-server.pid)" 2>/dev/null || true
+          fi
+      - name: Save results screenshots and logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-design-qa-${{ github.run_id }}
+          name: design-preview-browser-checks-${{ github.run_id }}-${{ github.run_attempt }}
           path: mobile-qa-results/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: error
