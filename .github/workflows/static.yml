@@ -1,0 +1,107 @@
+
+name: Publish design previews
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare preview website
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          import html
+
+          source = Path("deliveries")
+          destination = Path("_pages")
+          allowed = {
+              ".html", ".css", ".js",
+              ".png", ".jpg", ".jpeg",
+              ".gif", ".webp", ".svg",
+              ".ico", ".woff", ".woff2"
+          }
+
+          destination.mkdir(exist_ok=True)
+          entries = []
+
+          if source.exists():
+              for index in sorted(source.rglob("index.html")):
+                  folder = index.parent
+                  relative = folder.relative_to(source)
+
+                  if folder.is_symlink():
+                      continue
+
+                  target = destination / "deliveries" / relative
+                  target.mkdir(parents=True, exist_ok=True)
+
+                  for item in folder.rglob("*"):
+                      if not item.is_file() or item.is_symlink():
+                          continue
+                      if item.suffix.lower() not in allowed:
+                          continue
+
+                      output = target / item.relative_to(folder)
+                      output.parent.mkdir(parents=True, exist_ok=True)
+                      shutil.copy2(item, output)
+
+                  url = "deliveries/" + relative.as_posix() + "/"
+                  label = relative.as_posix()
+                  entries.append((url, label))
+
+          links = "\n".join(
+              '<li><a href="' + html.escape(url, quote=True)
+              + '">' + html.escape(label) + '</a></li>'
+              for url, label in entries
+          )
+
+          page = (
+              '<!doctype html><html lang="zh-CN">'
+              '<head><meta charset="utf-8">'
+              '<meta name="viewport" content="width=device-width, initial-scale=1">'
+              '<title>TabakoJP 设计预览</title></head>'
+              '<body><h1>TabakoJP 设计预览</h1>'
+              '<p>以下原型仅供设计评审，不代表正式商城。</p>'
+              '<ul>' + links + '</ul></body></html>'
+          )
+
+          (destination / "index.html").write_text(
+              page, encoding="utf-8"
+          )
+          print("Published preview versions:", len(entries))
+          PY
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload static website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _pages
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
